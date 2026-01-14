@@ -1,785 +1,894 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quantum Sound Explorer | Cynthia Kiprop</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-  <style>
-    :root {
-      --quantum: #8b5cf6;
-      --quantum-glow: rgba(139, 92, 246, 0.4);
-      --neon-pink: #ec4899;
-      --cyber-blue: #00ffff;
-      --energy-green: #10b981;
-      --dark-space: #0a0a1a;
-      --mid-space: #121230;
-      --light-space: #1e1e4a;
-      --text-glow: rgba(255, 255, 255, 0.9);
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quantum Sound Explorer | Cynthia Kiprop</title>
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      cursor: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='12' r='6' fill='%238b5cf6'/%3E%3Ccircle cx='12' cy='12' r='11' stroke='%238b5cf6' stroke-width='2'/%3E%3C/svg%3E") 12 12, auto;
-    }
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
 
-    body {
-      background: var(--dark-space);
-      color: white;
-      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-      overflow-x: hidden;
-      min-height: 100vh;
-      position: relative;
-    }
+    <style>
+      :root {
+        --quantum: #8b5cf6;
+        --quantum-glow: rgba(139, 92, 246, 0.4);
+        --neon-pink: #ec4899;
+        --cyber-blue: #00ffff;
+        --energy-green: #10b981;
+        --danger-red: #ef4444;
 
-    /* Quantum grid background */
-    .quantum-grid {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: 
-        radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
-        linear-gradient(45deg, #0a0a1a 0%, #121230 50%, #1a1a40 100%);
-      z-index: -2;
-      pointer-events: none;
-    }
+        --dark-space: #0a0a1a;
+        --mid-space: #121230;
+        --light-space: #1e1e4a;
 
-    .grid-lines {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: 
-        linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
-      background-size: 40px 40px;
-      animation: gridMove 30s linear infinite;
-    }
-
-    @keyframes gridMove {
-      0% { transform: translate(0, 0); }
-      100% { transform: translate(40px, 40px); }
-    }
-
-    /* Header */
-    .quantum-header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(10, 10, 26, 0.95);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(139, 92, 246, 0.3);
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 1.5rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--quantum), var(--neon-pink));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .logo-icon {
-      font-size: 2rem;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.1); opacity: 0.8; }
-    }
-
-    /* Main container */
-    .main-frame {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 2rem;
-      display: grid;
-      grid-template-columns: 1fr 400px;
-      gap: 2rem;
-      min-height: calc(100vh - 80px);
-    }
-
-    @media (max-width: 1024px) {
-      .main-frame {
-        grid-template-columns: 1fr;
-        padding: 1rem;
+        --text-glow: rgba(255, 255, 255, 0.9);
       }
-    }
 
-    /* Visualizer canvas */
-    .visualizer-frame {
-      background: rgba(20, 20, 40, 0.7);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: 
-        0 20px 80px rgba(0, 0, 0, 0.6),
-        inset 0 0 60px rgba(139, 92, 246, 0.1);
-      position: relative;
-      transition: all 0.3s ease;
-    }
-
-    .visualizer-frame:hover {
-      border-color: var(--cyber-blue);
-      box-shadow: 
-        0 20px 100px var(--quantum-glow),
-        inset 0 0 80px rgba(0, 255, 255, 0.15);
-    }
-
-    .frame-header {
-      padding: 1.5rem;
-      border-bottom: 1px solid rgba(139, 92, 246, 0.3);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(0, 0, 0, 0.4);
-    }
-
-    .frame-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .status-badge {
-      background: linear-gradient(135deg, var(--quantum), var(--neon-pink));
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
-    }
-
-    .status-badge .pulse {
-      width: 8px;
-      height: 8px;
-      background: white;
-      border-radius: 50%;
-      animation: pulse 1s infinite;
-    }
-
-    canvas {
-      width: 100%;
-      height: 500px;
-      display: block;
-      background: #050510;
-      transition: all 0.3s ease;
-    }
-
-    canvas:hover {
-      filter: brightness(1.2) contrast(1.1);
-    }
-
-    /* Control panel */
-    .quantum-controls {
-      background: rgba(20, 20, 40, 0.8);
-      backdrop-filter: blur(15px);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 24px;
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-    }
-
-    .control-section {
-      padding-bottom: 1.5rem;
-      border-bottom: 1px solid rgba(139, 92, 246, 0.2);
-    }
-
-    .control-section:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-
-    .section-title {
-      font-size: 0.875rem;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: var(--cyber-blue);
-      margin-bottom: 1rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* Button styles */
-    .quantum-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      color: white;
-      padding: 12px 20px;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    .quantum-btn:hover {
-      background: rgba(139, 92, 246, 0.2);
-      transform: translateY(-2px);
-      border-color: var(--cyber-blue);
-      box-shadow: 0 5px 20px rgba(139, 92, 246, 0.3);
-    }
-
-    .quantum-btn:active {
-      transform: translateY(0);
-    }
-
-    .quantum-btn.active {
-      background: linear-gradient(135deg, var(--quantum), var(--neon-pink));
-      border: none;
-      box-shadow: 0 5px 25px rgba(139, 92, 246, 0.5);
-    }
-
-    .quantum-btn.success {
-      background: linear-gradient(135deg, var(--energy-green), #059669);
-      border: none;
-    }
-
-    .quantum-btn.danger {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      border: none;
-    }
-
-    .btn-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 1rem;
-    }
-
-    /* Input sliders */
-    .slider-group {
-      margin: 1rem 0;
-    }
-
-    .slider-label {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 0.875rem;
-      color: var(--cyber-blue);
-    }
-
-    .slider-value {
-      font-weight: 600;
-      color: white;
-    }
-
-    .quantum-slider {
-      width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-      outline: none;
-      -webkit-appearance: none;
-    }
-
-    .quantum-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--quantum);
-      cursor: pointer;
-      box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
-      border: 3px solid white;
-      transition: all 0.2s ease;
-    }
-
-    .quantum-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
-      background: var(--neon-pink);
-    }
-
-    /* Visualizer style selector */
-    .style-selector {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 1rem;
-    }
-
-    .style-option {
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(139, 92, 246, 0.2);
-      border-radius: 12px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .style-option:hover {
-      background: rgba(139, 92, 246, 0.1);
-      border-color: var(--cyber-blue);
-      transform: translateY(-2px);
-    }
-
-    .style-option.active {
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
-      border-color: var(--quantum);
-      box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
-    }
-
-    .style-icon {
-      font-size: 1.5rem;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .style-name {
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-
-    /* Audio meters */
-    .audio-meters {
-      margin: 1.5rem 0;
-    }
-
-    .meter-group {
-      margin-bottom: 1rem;
-    }
-
-    .meter-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.875rem;
-      margin-bottom: 8px;
-      color: var(--cyber-blue);
-    }
-
-    .meter {
-      height: 10px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 5px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .meter-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--quantum), var(--neon-pink));
-      width: 0%;
-      transition: width 0.1s ease;
-      border-radius: 5px;
-      box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
-    }
-
-    /* Frequency display */
-    .frequency-display {
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 12px;
-      padding: 1rem;
-      margin-top: 1rem;
-    }
-
-    .freq-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 1rem;
-    }
-
-    .freq-item {
-      text-align: center;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      border: 1px solid rgba(139, 92, 246, 0.2);
-    }
-
-    .freq-label {
-      font-size: 0.75rem;
-      color: var(--cyber-blue);
-      margin-bottom: 4px;
-    }
-
-    .freq-value {
-      font-size: 1.2rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--quantum), var(--neon-pink));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    /* Voice command */
-    .voice-control {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 12px;
-      border: 1px solid rgba(0, 255, 255, 0.2);
-      text-align: center;
-    }
-
-    .voice-btn {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--quantum), var(--neon-pink));
-      border: none;
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin: 0 auto 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
-    }
-
-    .voice-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
-    }
-
-    .voice-btn.listening {
-      animation: voicePulse 1.5s infinite;
-    }
-
-    @keyframes voicePulse {
-      0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
-      70% { box-shadow: 0 0 0 20px rgba(139, 92, 246, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
-    }
-
-    /* Loading overlay */
-    .loading-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(10, 10, 26, 0.95);
-      backdrop-filter: blur(20px);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      transition: opacity 0.5s ease;
-    }
-
-    .quantum-loader {
-      width: 80px;
-      height: 80px;
-      border: 4px solid transparent;
-      border-top: 4px solid var(--quantum);
-      border-right: 4px solid var(--neon-pink);
-      border-radius: 50%;
-      animation: spin 1.5s linear infinite;
-      margin-bottom: 2rem;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .loading-text {
-      font-size: 1.2rem;
-      text-align: center;
-      max-width: 400px;
-      color: var(--cyber-blue);
-      letter-spacing: 2px;
-    }
-
-    /* Notification toast */
-    .quantum-toast {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      background: rgba(20, 20, 40, 0.9);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 12px;
-      padding: 1rem 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transform: translateX(100%);
-      opacity: 0;
-      transition: all 0.3s ease;
-      z-index: 1001;
-      max-width: 400px;
-    }
-
-    .quantum-toast.show {
-      transform: translateX(0);
-      opacity: 1;
-    }
-
-    .toast-icon {
-      font-size: 1.2rem;
-      color: var(--energy-green);
-    }
-
-    /* Particle count indicator */
-    .particle-count {
-      position: absolute;
-      bottom: 1rem;
-      right: 1rem;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      color: var(--cyber-blue);
-      border: 1px solid rgba(0, 255, 255, 0.2);
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-      .main-frame {
-        padding: 1rem;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        cursor: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='12' r='6' fill='%238b5cf6'/%3E%3Ccircle cx='12' cy='12' r='11' stroke='%238b5cf6' stroke-width='2'/%3E%3C/svg%3E")
+            12 12,
+          auto;
       }
-      
+
+      body {
+        background: var(--dark-space);
+        color: white;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        overflow-x: hidden;
+        min-height: 100vh;
+      }
+
+      /* Background */
+      .quantum-grid {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(
+            circle at 20% 30%,
+            rgba(139, 92, 246, 0.12) 0%,
+            transparent 52%
+          ),
+          radial-gradient(
+            circle at 80% 70%,
+            rgba(236, 72, 153, 0.12) 0%,
+            transparent 52%
+          ),
+          linear-gradient(45deg, #0a0a1a 0%, #121230 50%, #1a1a40 100%);
+        z-index: -2;
+        pointer-events: none;
+      }
+
+      .grid-lines {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(
+            rgba(0, 255, 255, 0.05) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 42px 42px;
+        animation: gridMove 30s linear infinite;
+        opacity: 0.9;
+      }
+
+      @keyframes gridMove {
+        0% {
+          transform: translate(0, 0);
+        }
+        100% {
+          transform: translate(42px, 42px);
+        }
+      }
+
+      /* Header */
       .quantum-header {
-        padding: 1rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(10, 10, 26, 0.88);
+        backdrop-filter: blur(18px);
+        border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+        padding: 1rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
       }
-      
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        background: linear-gradient(135deg, var(--quantum), var(--neon-pink));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .logo-icon {
+        font-size: 1.5rem;
+        animation: pulseSoft 2.2s infinite;
+      }
+
+      @keyframes pulseSoft {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.07);
+          opacity: 0.86;
+        }
+      }
+
+      /* Layout */
+      .main-frame {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        display: grid;
+        grid-template-columns: 1fr 420px;
+        gap: 1.5rem;
+        min-height: calc(100vh - 78px);
+      }
+
+      @media (max-width: 1024px) {
+        .main-frame {
+          grid-template-columns: 1fr;
+          padding: 1rem;
+        }
+      }
+
+      /* Visualizer */
+      .visualizer-frame {
+        background: rgba(20, 20, 40, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 18px 80px rgba(0, 0, 0, 0.6),
+          inset 0 0 60px rgba(139, 92, 246, 0.08);
+        position: relative;
+        transition: all 0.25s ease;
+      }
+
+      .visualizer-frame:hover {
+        border-color: var(--cyber-blue);
+        box-shadow: 0 18px 100px var(--quantum-glow),
+          inset 0 0 90px rgba(0, 255, 255, 0.12);
+      }
+
+      .frame-header {
+        padding: 1.1rem 1.2rem;
+        border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.35);
+      }
+
+      .frame-title {
+        font-size: 1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        letter-spacing: 1px;
+      }
+
+      .status-badge {
+        background: linear-gradient(135deg, var(--quantum), var(--neon-pink));
+        padding: 7px 12px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 0 18px rgba(139, 92, 246, 0.45);
+      }
+
+      .status-badge .pulse {
+        width: 8px;
+        height: 8px;
+        background: white;
+        border-radius: 50%;
+        animation: pulseDot 1s infinite;
+      }
+
+      @keyframes pulseDot {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.25);
+          opacity: 0.6;
+        }
+      }
+
+      canvas {
+        width: 100%;
+        height: 520px;
+        display: block;
+        background: #050510;
+      }
+
+      @media (max-width: 768px) {
+        canvas {
+          height: 420px;
+        }
+      }
+
+      .hud {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .pill {
+        background: rgba(0, 0, 0, 0.6);
+        padding: 8px 10px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        color: var(--cyber-blue);
+        border: 1px solid rgba(0, 255, 255, 0.2);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      /* Controls */
+      .quantum-controls {
+        background: rgba(20, 20, 40, 0.82);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 24px;
+        padding: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      .control-section {
+        padding-bottom: 1.2rem;
+        border-bottom: 1px solid rgba(139, 92, 246, 0.18);
+      }
+      .control-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      .section-title {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--cyber-blue);
+        margin-bottom: 0.85rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .quantum-btn {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        color: white;
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.92rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.18s ease;
+        cursor: pointer;
+        width: 100%;
+        user-select: none;
+      }
+
+      .quantum-btn:hover {
+        background: rgba(139, 92, 246, 0.2);
+        transform: translateY(-2px);
+        border-color: var(--cyber-blue);
+        box-shadow: 0 8px 22px rgba(139, 92, 246, 0.25);
+      }
+
+      .quantum-btn:active {
+        transform: translateY(0);
+      }
+
+      .quantum-btn.active {
+        background: linear-gradient(135deg, var(--quantum), var(--neon-pink));
+        border: none;
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+      }
+
+      .quantum-btn.success {
+        background: linear-gradient(135deg, var(--energy-green), #059669);
+        border: none;
+      }
+
+      .quantum-btn.danger {
+        background: linear-gradient(135deg, var(--danger-red), #dc2626);
+        border: none;
+      }
+
       .btn-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      @media (max-width: 768px) {
+        .btn-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Sliders */
+      .slider-group {
+        margin: 0.85rem 0;
+      }
+
+      .slider-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.86rem;
+        color: var(--cyber-blue);
+      }
+
+      .slider-value {
+        font-weight: 800;
+        color: white;
+      }
+
+      .quantum-slider {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        outline: none;
+        -webkit-appearance: none;
+      }
+
+      .quantum-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--quantum);
+        cursor: pointer;
+        box-shadow: 0 0 16px rgba(139, 92, 246, 0.75);
+        border: 3px solid white;
+        transition: transform 0.18s ease;
+      }
+
+      .quantum-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.12);
+        background: var(--neon-pink);
+      }
+
+      /* Modes */
+      .style-selector {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .style-option {
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.28);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        user-select: none;
+      }
+
+      .style-option:hover {
+        background: rgba(139, 92, 246, 0.12);
+        border-color: var(--cyber-blue);
+        transform: translateY(-2px);
+      }
+
+      .style-option.active {
+        background: linear-gradient(
+          135deg,
+          rgba(139, 92, 246, 0.3),
+          rgba(236, 72, 153, 0.3)
+        );
+        border-color: var(--quantum);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.25);
+      }
+
+      .style-icon {
+        font-size: 1.4rem;
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      .style-name {
+        font-size: 0.86rem;
+        font-weight: 800;
+      }
+
+      /* Meters */
+      .meter-group {
+        margin-bottom: 0.9rem;
+      }
+
+      .meter-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.86rem;
+        margin-bottom: 8px;
+        color: var(--cyber-blue);
+      }
+
+      .meter {
+        height: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .meter-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--quantum), var(--neon-pink));
+        width: 0%;
+        transition: width 0.08s linear;
+        border-radius: 999px;
+      }
+
+      .frequency-display {
+        background: rgba(0, 0, 0, 0.32);
+        border-radius: 12px;
+        padding: 0.9rem;
+        margin-top: 0.9rem;
+        border: 1px solid rgba(139, 92, 246, 0.18);
+      }
+
+      .freq-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 0.8rem;
+      }
+
+      @media (max-width: 768px) {
+        .freq-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      .freq-item {
+        text-align: center;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(139, 92, 246, 0.18);
+      }
+
+      .freq-label {
+        font-size: 0.72rem;
+        color: var(--cyber-blue);
+        margin-bottom: 4px;
+      }
+
+      .freq-value {
+        font-size: 1.1rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--quantum), var(--neon-pink));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* Voice */
+      .voice-control {
+        margin-top: 0.6rem;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.28);
+        border-radius: 12px;
+        border: 1px solid rgba(0, 255, 255, 0.18);
+        text-align: center;
+      }
+
+      .voice-btn {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--quantum), var(--neon-pink));
+        border: none;
+        color: white;
+        font-size: 1.4rem;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        margin: 0 auto 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 26px rgba(139, 92, 246, 0.42);
+      }
+
+      .voice-btn:hover {
+        transform: scale(1.08);
+        box-shadow: 0 0 40px rgba(139, 92, 246, 0.75);
+      }
+
+      .voice-btn.listening {
+        animation: voicePulse 1.5s infinite;
+      }
+
+      @keyframes voicePulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.65);
+        }
+        70% {
+          box-shadow: 0 0 0 18px rgba(139, 92, 246, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+        }
+      }
+
+      /* Loader */
+      .loading-screen {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 10, 26, 0.96);
+        backdrop-filter: blur(18px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        transition: opacity 0.5s ease;
+      }
+
+      .quantum-loader {
+        width: 84px;
+        height: 84px;
+        border: 4px solid transparent;
+        border-top: 4px solid var(--quantum);
+        border-right: 4px solid var(--neon-pink);
+        border-radius: 50%;
+        animation: spin 1.2s linear infinite;
+        margin-bottom: 1.2rem;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-text {
+        font-size: 1rem;
+        text-align: center;
+        max-width: 420px;
+        color: var(--cyber-blue);
+        letter-spacing: 2px;
+        opacity: 0.95;
+      }
+
+      /* Toast */
+      .quantum-toast {
+        position: fixed;
+        bottom: 1.25rem;
+        right: 1.25rem;
+        background: rgba(20, 20, 40, 0.92);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transform: translateX(120%);
+        opacity: 0;
+        transition: all 0.28s ease;
+        z-index: 1001;
+        max-width: 420px;
+      }
+
+      .quantum-toast.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .toast-icon {
+        font-size: 1.1rem;
+        color: var(--energy-green);
+      }
+
+      .toast-icon.warn {
+        color: #f59e0b;
+      }
+      .toast-icon.err {
+        color: var(--danger-red);
+      }
+
+      /* Fullscreen mode tweaks */
+      body.is-cinematic .quantum-controls {
+        display: none;
+      }
+      body.is-cinematic .main-frame {
         grid-template-columns: 1fr;
       }
-      
-      .style-selector {
-        grid-template-columns: repeat(4, 1fr);
+      body.is-cinematic canvas {
+        height: calc(100vh - 130px);
       }
-      
-      .freq-grid {
-        grid-template-columns: repeat(2, 1fr);
+
+      /* Reduced motion */
+      @media (prefers-reduced-motion: reduce) {
+        .grid-lines,
+        .logo-icon,
+        .status-badge .pulse,
+        .voice-btn.listening,
+        .quantum-loader {
+          animation: none !important;
+        }
       }
-    }
-  </style>
-</head>
-<body class="is-loading">
-    <!-- Page Loader (shows ~2s) -->
-    <div id="page-loader" class="page-loader" role="status" aria-live="polite" aria-label="Loading">
-      <div class="loader-backdrop"></div>
+    </style>
+  </head>
 
-      <div class="loader-center">
-        <div class="loader-orbit" aria-hidden="true"></div>
-        <div class="loader-orbit orbit-2" aria-hidden="true"></div>
-        <div class="loader-orbit orbit-3" aria-hidden="true"></div>
+  <body class="is-loading">
+    <!-- Loader (single, clean) -->
+    <div
+      id="pageLoader"
+      class="loading-screen"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading"
+    >
+      <div class="quantum-loader" aria-hidden="true"></div>
+      <div class="loading-text" id="loaderText">Initializing experience…</div>
+    </div>
 
-        <div class="loader-card">
-          <div class="loader-brand">
-            <span class="loader-mark" aria-hidden="true"></span>
-            <div class="loader-text">
-              <div class="loader-name">Cynthia J Kiprop</div>
-              <div class="loader-tagline">Design • Web • Data</div>
+    <!-- Background -->
+    <div class="quantum-grid" aria-hidden="true">
+      <div class="grid-lines"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="quantum-toast" id="quantumToast" aria-live="polite">
+      <i class="fas fa-check-circle toast-icon" id="toastIcon"></i>
+      <span id="toastMessage">Ready!</span>
+    </div>
+
+    <!-- Header -->
+    <header class="quantum-header">
+      <div class="logo">
+        <i class="fas fa-wave-square logo-icon"></i>
+        <span>QUANTUM SOUND EXPLORER</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.75rem">
+        <button class="quantum-btn" id="cinemaBtn" style="max-width: 210px">
+          <i class="fas fa-expand"></i> Cinematic
+        </button>
+        <button
+          class="quantum-btn"
+          onclick="window.open('index.html','_self')"
+          style="max-width: 180px"
+        >
+          <i class="fas fa-arrow-left"></i> Portfolio
+        </button>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main-frame">
+      <!-- Visualizer -->
+      <section class="visualizer-frame">
+        <div class="frame-header">
+          <div class="frame-title">
+            <i class="fas fa-eye"></i>
+            <span>QUANTUM VISUALIZER</span>
+          </div>
+          <div class="status-badge">
+            <div class="pulse"></div>
+            <span id="statusText">READY</span>
+          </div>
+        </div>
+
+        <canvas id="quantumCanvas" width="1024" height="520"></canvas>
+
+        <div class="hud">
+          <div class="pill">
+            <i class="fas fa-atom"></i>
+            <span>Particles: <b id="particleCount">0</b></span>
+          </div>
+          <div class="pill">
+            <i class="fas fa-bolt"></i>
+            <span>FPS: <b id="fpsValue">0</b></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Controls -->
+      <aside class="quantum-controls">
+        <!-- Audio source -->
+        <div class="control-section">
+          <h3 class="section-title">
+            <i class="fas fa-microphone"></i> AUDIO SOURCE
+          </h3>
+          <div class="btn-grid">
+            <button class="quantum-btn active" id="micBtn">
+              <i class="fas fa-microphone"></i> Microphone (M)
+            </button>
+            <button class="quantum-btn" id="synthBtn">
+              <i class="fas fa-music"></i> Synthesizer (S)
+            </button>
+            <button class="quantum-btn" id="fileBtn">
+              <i class="fas fa-file-audio"></i> Audio File (F)
+            </button>
+            <button class="quantum-btn danger" id="stopBtn">
+              <i class="fas fa-stop"></i> Stop (Space)
+            </button>
+          </div>
+
+          <!-- hidden file input -->
+          <input id="audioFileInput" type="file" accept="audio/*" hidden />
+        </div>
+
+        <!-- Presets -->
+        <div class="control-section">
+          <h3 class="section-title">
+            <i class="fas fa-wand-magic-sparkles"></i> PRESETS
+          </h3>
+          <div class="btn-grid">
+            <button class="quantum-btn" id="presetCinematic">
+              <i class="fas fa-film"></i> Cinematic
+            </button>
+            <button class="quantum-btn" id="presetChill">
+              <i class="fas fa-cloud"></i> Chill
+            </button>
+            <button class="quantum-btn" id="presetChaos">
+              <i class="fas fa-burst"></i> Chaos
+            </button>
+            <button class="quantum-btn" id="presetClean">
+              <i class="fas fa-gem"></i> Clean
+            </button>
+          </div>
+        </div>
+
+        <!-- Modes -->
+        <div class="control-section">
+          <h3 class="section-title">
+            <i class="fas fa-palette"></i> VISUALIZATION MODE (1-6)
+          </h3>
+          <div class="style-selector" id="modeGrid">
+            <div class="style-option active" data-mode="particles">
+              <i class="fas fa-atom style-icon"></i>
+              <div class="style-name">Particles</div>
+            </div>
+            <div class="style-option" data-mode="frequency">
+              <i class="fas fa-chart-bar style-icon"></i>
+              <div class="style-name">Frequency</div>
+            </div>
+            <div class="style-option" data-mode="waveform">
+              <i class="fas fa-wave-square style-icon"></i>
+              <div class="style-name">Waveform</div>
+            </div>
+            <div class="style-option" data-mode="spectrum">
+              <i class="fas fa-mountain style-icon"></i>
+              <div class="style-name">Spectrum</div>
+            </div>
+            <div class="style-option" data-mode="vortex">
+              <i class="fas fa-spinner style-icon"></i>
+              <div class="style-name">Vortex</div>
+            </div>
+            <div class="style-option" data-mode="neural">
+              <i class="fas fa-brain style-icon"></i>
+              <div class="style-name">Neural</div>
             </div>
           </div>
-
-          <div class="loader-progress" aria-hidden="true">
-            <span class="loader-bar"></span>
-          </div>
-
-          <div class="loader-hint">Loading the experience…</div>
-        </div>
-      </div>
-    </div>
-  <!-- Quantum grid background -->
-  <div class="quantum-grid">
-    <div class="grid-lines"></div>
-  </div>
-
-  <!-- Loading screen -->
-  <div class="loading-screen" id="loadingScreen">
-    <div class="quantum-loader"></div>
-    <div class="loading-text" id="loadingText">INITIALIZING QUANTUM AUDIO ENGINE...</div>
-  </div>
-
-  <!-- Toast notification -->
-  <div class="quantum-toast" id="quantumToast">
-    <i class="fas fa-check-circle toast-icon"></i>
-    <span id="toastMessage">Audio engine ready!</span>
-  </div>
-
-  <!-- Header -->
-  <header class="quantum-header">
-    <div class="logo">
-      <i class="fas fa-wave-square logo-icon"></i>
-      <span>QUANTUM SOUND EXPLORER</span>
-    </div>
-    <div style="display: flex; align-items: center; gap: 1rem;">
-      <button class="quantum-btn" onclick="window.open('index.html', '_self')">
-        <i class="fas fa-arrow-left"></i> Portfolio
-      </button>
-    </div>
-  </header>
-
-  <!-- Main content -->
-  <main class="main-frame">
-    <!-- Visualizer canvas -->
-    <section class="visualizer-frame">
-      <div class="frame-header">
-        <div class="frame-title">
-          <i class="fas fa-eye"></i>
-          <span>QUANTUM VISUALIZER</span>
-        </div>
-        <div class="status-badge">
-          <div class="pulse"></div>
-          <span id="statusText">READY</span>
-        </div>
-      </div>
-      <canvas id="quantumCanvas" width="1024" height="500"></canvas>
-      <div class="particle-count">
-        <i class="fas fa-atom"></i>
-        <span>PARTICLES: <span id="particleCount">0</span></span>
-      </div>
-    </section>
-
-    <!-- Control panel -->
-    <aside class="quantum-controls">
-      <!-- Audio source controls -->
-      <div class="control-section">
-        <h3 class="section-title">
-          <i class="fas fa-microphone"></i>
-          AUDIO SOURCE
-        </h3>
-        <div class="btn-grid">
-          <button class="quantum-btn active" id="micBtn">
-            <i class="fas fa-microphone"></i> Microphone
-          </button>
-          <button class="quantum-btn" id="synthBtn">
-            <i class="fas fa-synth"></i> Synthesizer
-          </button>
-          <button class="quantum-btn" id="fileBtn">
-            <i class="fas fa-file-audio"></i> Audio File
-          </button>
-          <button class="quantum-btn danger" id="stopBtn">
-            <i class="fas fa-stop"></i> Stop
-          </button>
-        </div>
-      </div>
-
-      <!-- Visualizer styles -->
-      <div class="control-section">
-        <h3 class="section-title">
-          <i class="fas fa-palette"></i>
-          VISUALIZATION MODE
-        </h3>
-        <div class="style-selector">
-          <div class="style-option active" data-mode="particles">
-            <i class="fas fa-atom style-icon"></i>
-            <div class="style-name">Particles</div>
-          </div>
-          <div class="style-option" data-mode="frequency">
-            <i class="fas fa-chart-bar style-icon"></i>
-            <div class="style-name">Frequency</div>
-          </div>
-          <div class="style-option" data-mode="waveform">
-            <i class="fas fa-wave-square style-icon"></i>
-            <div class="style-name">Waveform</div>
-          </div>
-          <div class="style-option" data-mode="spectrum">
-            <i class="fas fa-mountain style-icon"></i>
-            <div class="style-name">Spectrum</div>
-          </div>
-          <div class="style-option" data-mode="vortex">
-            <i class="fas fa-spinner style-icon"></i>
-            <div class="style-name">Vortex</div>
-          </div>
-          <div class="style-option" data-mode="neural">
-            <i class="fas fa-brain style-icon"></i>
-            <div class="style-name">Neural</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Audio parameters -->
-      <div class="control-section">
-        <h3 class="section-title">
-          <i class="fas fa-sliders-h"></i>
-          AUDIO PARAMETERS
-        </h3>
-        
-        <div class="slider-group">
-          <div class="slider-label">
-            <span>Sensitivity</span>
-            <span class="slider-value" id="sensitivityValue">0.8</span>
-          </div>
-          <input type="range" class="quantum-slider" id="sensitivitySlider" 
-                 min="0.1" max="2" step="0.1" value="0.8">
         </div>
 
-        <div class="slider-group">
-          <div class="slider-label">
-            <span>Particle Density</span>
-            <span class="slider-value" id="densityValue">0.7</span>
+        <!-- Params -->
+        <div class="control-section">
+          <h3 class="section-title">
+            <i class="fas fa-sliders-h"></i> AUDIO PARAMETERS
+          </h3>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Sensitivity</span>
+              <span class="slider-value" id="sensitivityValue">0.8</span>
+            </div>
+            <input
+              type="range"
+              class="quantum-slider"
+              id="sensitivitySlider"
+              min="0.1"
+              max="2"
+              step="0.1"
+              value="0.8"
+            />
           </div>
-          <input type="range" class="quantum-slider" id="densitySlider" 
-                 min="0.1" max="1.5" step="0.1" value="0.7">
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Particle Density</span>
+              <span class="slider-value" id="densityValue">0.7</span>
+            </div>
+            <input
+              type="range"
+              class="quantum-slider"
+              id="densitySlider"
+              min="0.1"
+              max="1.5"
+              step="0.1"
+              value="0.7"
+            />
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Color Intensity</span>
+              <span class="slider-value" id="intensityValue">0.9</span>
+            </div>
+            <input
+              type="range"
+              class="quantum-slider"
+              id="intensitySlider"
+              min="0.1"
+              max="2"
+              step="0.1"
+              value="0.9"
+            />
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Physics Gravity</span>
+              <span class="slider-value" id="gravityValue">0.3</span>
+            </div>
+            <input
+              type="range"
+              class="quantum-slider"
+              id="gravitySlider"
+              min="-1"
+              max="1"
+              step="0.1"
+              value="0.3"
+            />
+          </div>
         </div>
 
-        <div class="slider-group">
-          <div class="slider-label">
-            <span>Color Intensity</span>
-            <span class="slider-value" id="intensityValue">0.9</span>
-          </div>
-          <input type="range" class="quantum-slider" id="intensitySlider" 
-                 min="0.1" max="2" step="0.1" value="0.9">
-        </div>
+        <!-- Meters -->
+        <div class="control-section">
+          <h3 class="section-title">
+            <i class="fas fa-tachometer-alt"></i> AUDIO METERS
+          </h3>
 
-        <div class="slider-group">
-          <div class="slider-label">
-            <span>Physics Gravity</span>
-            <span class="slider-value" id="gravityValue">0.3</span>
-          </div>
-          <input type="range" class="quantum-slider" id="gravitySlider" 
-                 min="-1" max="1" step="0.1" value="0.3">
-        </div>
-      </div>
-
-      <!-- Audio meters -->
-      <div class="control-section">
-        <h3 class="section-title">
-          <i class="fas fa-tachometer-alt"></i>
-          AUDIO METERS
-        </h3>
-        
-        <div class="audio-meters">
           <div class="meter-group">
             <div class="meter-label">
-              <span>Volume</span>
-              <span id="volumeValue">0%</span>
+              <span>Volume</span><span id="volumeValue">0%</span>
             </div>
             <div class="meter">
               <div class="meter-fill" id="volumeBar"></div>
@@ -788,887 +897,1113 @@
 
           <div class="meter-group">
             <div class="meter-label">
-              <span>Bass</span>
-              <span id="bassValue">0%</span>
+              <span>Bass</span><span id="bassValue">0%</span>
             </div>
-            <div class="meter">
-              <div class="meter-fill" id="bassBar"></div>
-            </div>
+            <div class="meter"><div class="meter-fill" id="bassBar"></div></div>
           </div>
 
           <div class="meter-group">
             <div class="meter-label">
-              <span>Mid</span>
-              <span id="midValue">0%</span>
+              <span>Mid</span><span id="midValue">0%</span>
             </div>
-            <div class="meter">
-              <div class="meter-fill" id="midBar"></div>
-            </div>
+            <div class="meter"><div class="meter-fill" id="midBar"></div></div>
           </div>
 
           <div class="meter-group">
             <div class="meter-label">
-              <span>Treble</span>
-              <span id="trebleValue">0%</span>
+              <span>Treble</span><span id="trebleValue">0%</span>
             </div>
             <div class="meter">
               <div class="meter-fill" id="trebleBar"></div>
             </div>
           </div>
+
+          <div class="frequency-display">
+            <div class="slider-label">
+              <span><i class="fas fa-waveform"></i> Frequency Analysis</span>
+            </div>
+            <div class="freq-grid">
+              <div class="freq-item">
+                <div class="freq-label">Dominant</div>
+                <div class="freq-value" id="dominantFreq">0 Hz</div>
+              </div>
+              <div class="freq-item">
+                <div class="freq-label">Peak</div>
+                <div class="freq-value" id="peakFreq">0 Hz</div>
+              </div>
+              <div class="freq-item">
+                <div class="freq-label">RMS</div>
+                <div class="freq-value" id="rmsValue">0.0</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="frequency-display">
-          <div class="slider-label">
-            <span><i class="fas fa-waveform"></i> Frequency Analysis</span>
-          </div>
-          <div class="freq-grid">
-            <div class="freq-item">
-              <div class="freq-label">Dominant</div>
-              <div class="freq-value" id="dominantFreq">0 Hz</div>
+        <!-- Voice -->
+        <div class="control-section">
+          <h3 class="section-title">
+            <i class="fas fa-robot"></i> CYNTHIA VOICE CONTROL
+          </h3>
+
+          <div class="voice-control">
+            <button class="voice-btn" id="voiceBtn" aria-label="Toggle voice">
+              <i class="fas fa-microphone"></i>
+            </button>
+            <div style="font-size: 0.86rem; color: var(--cyber-blue)">
+              Try: “start synth”, “microphone”, “mode vortex”, “preset chaos”
             </div>
-            <div class="freq-item">
-              <div class="freq-label">Peak</div>
-              <div class="freq-value" id="peakFreq">0 Hz</div>
-            </div>
-            <div class="freq-item">
-              <div class="freq-label">RMS</div>
-              <div class="freq-value" id="rmsValue">0.0</div>
+            <div id="voiceStatus" style="font-size: 0.75rem; color: #94a3b8">
+              Click to enable voice control
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Voice control -->
-      <div class="control-section">
-        <h3 class="section-title">
-          <i class="fas fa-robot"></i>
-          VOICE CONTROL
-        </h3>
-        
-        <div class="voice-control">
-          <button class="voice-btn" id="voiceBtn">
-            <i class="fas fa-microphone"></i>
-          </button>
-          <div style="font-size: 0.875rem; color: var(--cyber-blue); margin-bottom: 0.5rem;">
-            Say "start", "stop", "change mode", or "increase sensitivity"
-          </div>
-          <div id="voiceStatus" style="font-size: 0.75rem; color: #94a3b8;">
-            Click to enable voice control
+        <!-- Tips -->
+        <div class="control-section">
+          <h3 class="section-title">
+            <i class="fas fa-keyboard"></i> SHORTCUTS
+          </h3>
+          <div style="font-size: 0.82rem; line-height: 1.55; color: #cbd5e1">
+            Space = Stop/Start • M = Mic • S = Synth • F = File<br />
+            1-6 = Modes • C = Cinematic
           </div>
         </div>
-      </div>
-    </aside>
-  </main>
+      </aside>
+    </main>
 
-  <script>
-    class QuantumAudioVisualizer {
-      constructor() {
-        this.canvas = document.getElementById('quantumCanvas');
-        this.ctx = this.canvas.getContext('2d', { alpha: false });
-        this.audioContext = null;
-        this.analyser = null;
-        this.source = null;
-        this.oscillator = null;
-        this.gainNode = null;
-        
-        this.isPlaying = false;
-        this.visualizationMode = 'particles';
-        this.sensitivity = 0.8;
-        this.density = 0.7;
-        this.intensity = 0.9;
-        this.gravity = 0.3;
-        
-        this.particles = [];
-        this.frequencyData = new Uint8Array(1024);
-        this.timeDomainData = new Uint8Array(1024);
-        this.audioStream = null;
-        
-        this.animationId = null;
-        this.lastFrameTime = 0;
-        
-        this.init();
-        this.setupEventListeners();
-        this.showToast('Quantum Audio Engine Initialized', 'success');
-        
-        // Hide loading screen
-        setTimeout(() => {
-          document.getElementById('loadingScreen').style.opacity = '0';
-          setTimeout(() => {
-            document.getElementById('loadingScreen').style.display = 'none';
-          }, 500);
-        }, 1500);
+    <script>
+      // =========================
+      // Small helpers
+      // =========================
+      const $ = (sel) => document.querySelector(sel);
+      const $$ = (sel) => document.querySelectorAll(sel);
+
+      function clamp(n, a, b) {
+        return Math.max(a, Math.min(b, n));
       }
 
-      init() {
-        this.resizeCanvas();
-        window.addEventListener('resize', () => this.resizeCanvas());
-        
-        // Initialize Web Audio API
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        this.analyser = this.audioContext.createAnalyser();
-        this.analyser.fftSize = 2048;
-        this.analyser.smoothingTimeConstant = 0.8;
-        
-        this.startDefaultAudio();
+      // =========================
+      // Toast
+      // =========================
+      function showToast(message, type = "success") {
+        const toast = $("#quantumToast");
+        const msg = $("#toastMessage");
+        const icon = $("#toastIcon");
+
+        msg.textContent = message;
+
+        icon.className = "fas toast-icon";
+        if (type === "success") icon.classList.add("fa-check-circle");
+        if (type === "info") icon.classList.add("fa-circle-info");
+        if (type === "warning")
+          icon.classList.add("fa-triangle-exclamation", "warn");
+        if (type === "error") icon.classList.add("fa-circle-xmark", "err");
+
+        toast.classList.add("show");
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => toast.classList.remove("show"), 2600);
       }
 
-      resizeCanvas() {
-        const container = this.canvas.parentElement;
-        const dpr = window.devicePixelRatio || 1;
-        const rect = container.getBoundingClientRect();
-        
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = 500 * dpr;
-        this.ctx.scale(dpr, dpr);
-        this.canvas.style.width = rect.width + 'px';
-        this.canvas.style.height = '500px';
-      }
+      // =========================
+      // Cynthia Voice Assistant (clean + single recognition)
+      // =========================
+      class CynthiaVoiceAssistant {
+        constructor(onCommand) {
+          this.onCommand = onCommand;
+          this.isListening = false;
+          this.isMuted = false;
 
-      setupEventListeners() {
-        // Audio source buttons
-        document.getElementById('micBtn').addEventListener('click', () => this.startMicrophone());
-        document.getElementById('synthBtn').addEventListener('click', () => this.startSynthesizer());
-        document.getElementById('fileBtn').addEventListener('click', () => this.loadAudioFile());
-        document.getElementById('stopBtn').addEventListener('click', () => this.stopAudio());
+          this.synth = window.speechSynthesis;
+          this.voice = null;
 
-        // Visualization mode selector
-        document.querySelectorAll('.style-option').forEach(option => {
-          option.addEventListener('click', () => {
-            document.querySelectorAll('.style-option').forEach(opt => opt.classList.remove('active'));
-            option.classList.add('active');
-            this.visualizationMode = option.dataset.mode;
-            this.updateStatus(`Mode: ${option.querySelector('.style-name').textContent}`);
-          });
-        });
+          this.recognition = null;
+          this.initSpeech();
+          this.initRecognition();
+        }
 
-        // Sliders
-        document.getElementById('sensitivitySlider').addEventListener('input', (e) => {
-          this.sensitivity = parseFloat(e.target.value);
-          document.getElementById('sensitivityValue').textContent = this.sensitivity.toFixed(1);
-        });
+        initSpeech() {
+          const set = () => {
+            const voices = this.synth.getVoices();
+            // best-effort pick:
+            this.voice =
+              voices.find((v) =>
+                /Google UK English Female|Samantha|Female|Woman/i.test(v.name)
+              ) ||
+              voices[0] ||
+              null;
+          };
 
-        document.getElementById('densitySlider').addEventListener('input', (e) => {
-          this.density = parseFloat(e.target.value);
-          document.getElementById('densityValue').textContent = this.density.toFixed(1);
-        });
+          if (this.synth.getVoices().length) set();
+          else this.synth.addEventListener("voiceschanged", set);
+        }
 
-        document.getElementById('intensitySlider').addEventListener('input', (e) => {
-          this.intensity = parseFloat(e.target.value);
-          document.getElementById('intensityValue').textContent = this.intensity.toFixed(1);
-        });
+        initRecognition() {
+          const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SR) return;
 
-        document.getElementById('gravitySlider').addEventListener('input', (e) => {
-          this.gravity = parseFloat(e.target.value);
-          document.getElementById('gravityValue').textContent = this.gravity.toFixed(1);
-        });
+          this.recognition = new SR();
+          this.recognition.continuous = false;
+          this.recognition.interimResults = false;
+          this.recognition.lang = "en-US";
 
-        // Voice control
-        document.getElementById('voiceBtn').addEventListener('click', () => this.toggleVoiceControl());
+          this.recognition.onstart = () => {
+            this.isListening = true;
+            $("#voiceBtn").classList.add("listening");
+            $("#voiceStatus").textContent = "Listening…";
+          };
 
-        // Canvas interaction
-        this.canvas.addEventListener('click', (e) => {
-          const rect = this.canvas.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          this.createParticleExplosion(x, y);
-        });
+          this.recognition.onresult = (e) => {
+            const transcript = e.results[0][0].transcript.toLowerCase().trim();
+            $("#voiceStatus").textContent = `Heard: "${transcript}"`;
+            this.onCommand?.(transcript);
+          };
 
-        this.canvas.addEventListener('mousemove', (e) => {
-          if (!this.isPlaying) return;
-          
-          const rect = this.canvas.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          
-          // Create particles on mouse trail
-          if (Math.random() > 0.7) {
-            this.particles.push({
-              x, y,
-              vx: (Math.random() - 0.5) * 4,
-              vy: (Math.random() - 0.5) * 4,
-              radius: 1 + Math.random() * 3,
-              hue: Math.random() * 360,
-              life: 100,
-              type: 'trail'
-            });
+          this.recognition.onerror = (e) => {
+            this.isListening = false;
+            $("#voiceBtn").classList.remove("listening");
+            $("#voiceStatus").textContent = "Voice error. Try again.";
+            showToast("Voice recognition error", "warning");
+          };
+
+          this.recognition.onend = () => {
+            this.isListening = false;
+            $("#voiceBtn").classList.remove("listening");
+            if ($("#voiceStatus").textContent.startsWith("Heard:")) return;
+            $("#voiceStatus").textContent = "Click to enable voice control";
+          };
+        }
+
+        toggleListening() {
+          if (!this.recognition) {
+            showToast(
+              "Voice recognition not supported in this browser",
+              "warning"
+            );
+            return;
           }
-        });
+          if (this.isListening) this.recognition.stop();
+          else this.recognition.start();
+        }
 
-        // Start animation loop
-        this.animate();
-      }
+        speak(text) {
+          if (this.isMuted) return;
+          if (!("speechSynthesis" in window)) return;
 
-      async startMicrophone() {
-        try {
-          this.stopAudio();
-          
-          this.audioStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: false,
-              noiseSuppression: false,
-              autoGainControl: false
-            }
-          });
-          
-          this.source = this.audioContext.createMediaStreamSource(this.audioStream);
-          this.source.connect(this.analyser);
-          this.isPlaying = true;
-          
-          this.updateButtonStates('micBtn');
-          this.updateStatus('Microphone Active');
-          this.showToast('Microphone connected', 'success');
-          
-        } catch (error) {
-          console.error('Microphone error:', error);
-          this.showToast('Microphone access denied. Using synthesizer instead.', 'warning');
-          this.startSynthesizer();
+          const u = new SpeechSynthesisUtterance(text);
+          if (this.voice) u.voice = this.voice;
+          u.rate = 0.95;
+          u.pitch = 1.0;
+          u.volume = 1.0;
+
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(u);
         }
       }
 
-      startSynthesizer() {
-        this.stopAudio();
-        
-        // Create oscillator for sound generation
-        this.oscillator = this.audioContext.createOscillator();
-        this.gainNode = this.audioContext.createGain();
-        
-        this.oscillator.type = 'sawtooth';
-        this.oscillator.frequency.value = 220;
-        this.gainNode.gain.value = 0.1;
-        
-        // Create modulation for more interesting sound
-        const modulator = this.audioContext.createOscillator();
-        const modulatorGain = this.audioContext.createGain();
-        
-        modulator.type = 'sine';
-        modulator.frequency.value = 3;
-        modulatorGain.gain.value = 40;
-        
-        modulator.connect(modulatorGain);
-        modulatorGain.connect(this.oscillator.frequency);
-        
-        this.oscillator.connect(this.gainNode);
-        this.gainNode.connect(this.analyser);
-        this.analyser.connect(this.audioContext.destination);
-        
-        this.oscillator.start();
-        modulator.start();
-        
-        this.isPlaying = true;
-        
-        // Random frequency changes for dynamic sound
-        setInterval(() => {
-          if (this.oscillator) {
-            const freq = 110 + Math.random() * 880;
-            this.oscillator.frequency.linearRampToValueAtTime(freq, this.audioContext.currentTime + 0.5);
+      // =========================
+      // Quantum Audio Visualizer (FULL, working)
+      // =========================
+      class QuantumAudioVisualizer {
+        constructor() {
+          this.canvas = $("#quantumCanvas");
+          this.ctx = this.canvas.getContext("2d");
+
+          // render
+          this.dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+          this.lastT = performance.now();
+          this.fps = 0;
+          this.fpsSmoothing = 0.9;
+
+          // audio
+          this.audioContext = null;
+          this.analyser = null;
+          this.masterGain = null;
+
+          this.sourceNode = null; // either media stream / buffer source / synth chain output
+          this.mediaStream = null;
+          this.bufferSource = null;
+          this.osc = null;
+          this.modOsc = null;
+          this.synthInterval = null;
+
+          this.isPlaying = false;
+          this.sourceType = "mic"; // mic | synth | file
+
+          this.mode = "particles";
+
+          // params
+          this.sensitivity = 0.8;
+          this.density = 0.7;
+          this.intensity = 0.9;
+          this.gravity = 0.3;
+
+          // analysis buffers
+          this.fftSize = 2048;
+          this.freq = new Uint8Array(this.fftSize / 2);
+          this.time = new Uint8Array(this.fftSize / 2);
+
+          // visuals
+          this.particles = [];
+          this.maxParticles = 900; // safety cap
+          this.trailAlpha = 0.14; // background fade
+
+          // neural mode
+          this.nodes = [];
+          this.maxNodes = 46;
+
+          this.bindUI();
+          this.resize();
+          window.addEventListener("resize", () => this.resize());
+
+          this.loop();
+        }
+
+        async ensureAudio() {
+          if (!this.audioContext) {
+            this.audioContext = new (window.AudioContext ||
+              window.webkitAudioContext)();
+            this.analyser = this.audioContext.createAnalyser();
+            this.analyser.fftSize = this.fftSize;
+            this.analyser.smoothingTimeConstant = 0.82;
+
+            this.masterGain = this.audioContext.createGain();
+            this.masterGain.gain.value = 0.7;
+
+            this.analyser.connect(this.masterGain);
+            this.masterGain.connect(this.audioContext.destination);
           }
-        }, 1000);
-        
-        this.updateButtonStates('synthBtn');
-        this.updateStatus('Synthesizer Active');
-        this.showToast('Synthesizer started', 'success');
-      }
 
-      startDefaultAudio() {
-        // Start with synthesizer by default
-        this.startSynthesizer();
-      }
+          // browsers often start in suspended
+          if (this.audioContext.state === "suspended") {
+            await this.audioContext.resume();
+          }
+        }
 
-      loadAudioFile() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'audio/*';
-        
-        input.onchange = (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const arrayBuffer = e.target.result;
-            this.audioContext.decodeAudioData(arrayBuffer, (buffer) => {
-              this.stopAudio();
-              
-              this.source = this.audioContext.createBufferSource();
-              this.source.buffer = buffer;
-              this.source.connect(this.analyser);
-              this.analyser.connect(this.audioContext.destination);
-              
-              this.source.start();
-              this.isPlaying = true;
-              
-              this.updateButtonStates('fileBtn');
-              this.updateStatus(`Playing: ${file.name}`);
-              this.showToast(`Loaded: ${file.name}`, 'success');
-              
-              // Loop the audio
-              this.source.onended = () => {
-                this.source.start();
-              };
+        bindUI() {
+          // buttons
+          $("#micBtn").addEventListener("click", () => this.startMicrophone());
+          $("#synthBtn").addEventListener("click", () => this.startSynth());
+          $("#stopBtn").addEventListener("click", () => this.stopAudio());
+          $("#fileBtn").addEventListener("click", () =>
+            $("#audioFileInput").click()
+          );
+
+          $("#audioFileInput").addEventListener("change", (e) =>
+            this.loadAudioFile(e.target.files?.[0])
+          );
+
+          // modes
+          $$("#modeGrid .style-option").forEach((el) => {
+            el.addEventListener("click", () => {
+              this.setMode(el.dataset.mode);
+            });
+          });
+
+          // sliders
+          const hookSlider = (id, valueEl, setter) => {
+            const el = $(id);
+            el.addEventListener("input", () => {
+              const v = parseFloat(el.value);
+              $(valueEl).textContent = v.toFixed(1);
+              setter(v);
             });
           };
-          reader.readAsArrayBuffer(file);
-        };
-        
-        input.click();
-      }
 
-      stopAudio() {
-        this.isPlaying = false;
-        
-        if (this.oscillator) {
-          this.oscillator.stop();
-          this.oscillator.disconnect();
-          this.oscillator = null;
-        }
-        
-        if (this.gainNode) {
-          this.gainNode.disconnect();
-          this.gainNode = null;
-        }
-        
-        if (this.source && this.source.stop) {
-          this.source.stop();
-          this.source.disconnect();
-          this.source = null;
-        }
-        
-        if (this.audioStream) {
-          this.audioStream.getTracks().forEach(track => track.stop());
-          this.audioStream = null;
-        }
-        
-        this.updateButtonStates();
-        this.updateStatus('Stopped');
-        this.showToast('Audio stopped', 'info');
-      }
+          hookSlider(
+            "#sensitivitySlider",
+            "#sensitivityValue",
+            (v) => (this.sensitivity = v)
+          );
+          hookSlider(
+            "#densitySlider",
+            "#densityValue",
+            (v) => (this.density = v)
+          );
+          hookSlider(
+            "#intensitySlider",
+            "#intensityValue",
+            (v) => (this.intensity = v)
+          );
+          hookSlider(
+            "#gravitySlider",
+            "#gravityValue",
+            (v) => (this.gravity = v)
+          );
 
-      updateButtonStates(activeBtn = null) {
-        const buttons = ['micBtn', 'synthBtn', 'fileBtn'];
-        buttons.forEach(btnId => {
-          const btn = document.getElementById(btnId);
-          btn.classList.remove('active');
-        });
-        
-        if (activeBtn) {
-          document.getElementById(activeBtn).classList.add('active');
-        }
-      }
+          // presets
+          $("#presetCinematic").addEventListener("click", () =>
+            this.applyPreset("cinematic")
+          );
+          $("#presetChill").addEventListener("click", () =>
+            this.applyPreset("chill")
+          );
+          $("#presetChaos").addEventListener("click", () =>
+            this.applyPreset("chaos")
+          );
+          $("#presetClean").addEventListener("click", () =>
+            this.applyPreset("clean")
+          );
 
-      updateStatus(text) {
-        document.getElementById('statusText').textContent = text;
-      }
+          // cinematic toggle
+          $("#cinemaBtn").addEventListener("click", () =>
+            this.toggleCinematic()
+          );
 
-      showToast(message, type = 'info') {
-        const toast = document.getElementById('quantumToast');
-        const toastMessage = document.getElementById('toastMessage');
-        
-        toastMessage.textContent = message;
-        
-        // Set icon based on type
-        const icon = toast.querySelector('.toast-icon');
-        icon.className = 'fas fa-' + 
-          (type === 'success' ? 'check-circle' : 
-           type === 'warning' ? 'exclamation-triangle' : 
-           type === 'error' ? 'times-circle' : 'info-circle') + ' toast-icon';
-        
-        toast.classList.add('show');
-        
-        setTimeout(() => {
-          toast.classList.remove('show');
-        }, 3000);
-      }
+          // keyboard
+          window.addEventListener("keydown", (e) => {
+            if (e.target && ["INPUT", "TEXTAREA"].includes(e.target.tagName))
+              return;
 
-      createParticleExplosion(x, y, count = 50) {
-        for (let i = 0; i < count; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = 2 + Math.random() * 8;
-          
-          this.particles.push({
-            x, y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            radius: 2 + Math.random() * 6,
-            hue: Math.random() * 360,
-            life: 100,
-            type: 'explosion'
+            if (e.code === "Space") {
+              e.preventDefault();
+              if (this.isPlaying) this.stopAudio();
+              else this.startSynth();
+            }
+
+            const k = e.key.toLowerCase();
+            if (k === "m") this.startMicrophone();
+            if (k === "s") this.startSynth();
+            if (k === "f") $("#audioFileInput").click();
+            if (k === "c") this.toggleCinematic();
+
+            // 1-6 modes
+            const map = [
+              "particles",
+              "frequency",
+              "waveform",
+              "spectrum",
+              "vortex",
+              "neural",
+            ];
+            if (/^[1-6]$/.test(e.key))
+              this.setMode(map[parseInt(e.key, 10) - 1]);
           });
         }
-      }
 
-      getAudioData() {
-        if (!this.isPlaying) {
-          // Generate fake data for demo when no audio is playing
-          const time = performance.now() * 0.001;
-          
-          for (let i = 0; i < this.frequencyData.length; i++) {
-            const value = Math.sin(time * 2 + i * 0.1) * 50 + 100;
-            this.frequencyData[i] = Math.max(0, Math.min(255, value));
-          }
-          
-          for (let i = 0; i < this.timeDomainData.length; i++) {
-            const value = Math.sin(time * 5 + i * 0.05) * 50 + 128;
-            this.timeDomainData[i] = Math.max(0, Math.min(255, value));
-          }
-        } else {
-          this.analyser.getByteFrequencyData(this.frequencyData);
-          this.analyser.getByteTimeDomainData(this.timeDomainData);
+        toggleCinematic() {
+          document.body.classList.toggle("is-cinematic");
+          const isOn = document.body.classList.contains("is-cinematic");
+          $("#cinemaBtn").innerHTML = isOn
+            ? '<i class="fas fa-compress"></i> Exit'
+            : '<i class="fas fa-expand"></i> Cinematic';
+          showToast(isOn ? "Cinematic mode ON" : "Cinematic mode OFF", "info");
         }
-        
-        // Calculate audio metrics
-        let sum = 0;
-        let peak = 0;
-        let peakIndex = 0;
-        
-        for (let i = 0; i < this.frequencyData.length; i++) {
-          const value = this.frequencyData[i];
-          sum += value;
-          if (value > peak) {
-            peak = value;
-            peakIndex = i;
-          }
-        }
-        
-        const average = sum / this.frequencyData.length;
-        const volume = average / 255;
-        const dominantFreq = (peakIndex / this.frequencyData.length) * (this.audioContext.sampleRate / 2);
-        
-        // Update meters
-        const volumePercent = Math.min(100, Math.round(volume * 100));
-        document.getElementById('volumeValue').textContent = `${volumePercent}%`;
-        document.getElementById('volumeBar').style.width = `${volumePercent}%`;
-        
-        // Update frequency bars (bass, mid, treble)
-        const bass = this.getFrequencyRange(0, 250);
-        const mid = this.getFrequencyRange(250, 4000);
-        const treble = this.getFrequencyRange(4000, 20000);
-        
-        document.getElementById('bassValue').textContent = `${Math.round(bass * 100)}%`;
-        document.getElementById('bassBar').style.width = `${bass * 100}%`;
-        
-        document.getElementById('midValue').textContent = `${Math.round(mid * 100)}%`;
-        document.getElementById('midBar').style.width = `${mid * 100}%`;
-        
-        document.getElementById('trebleValue').textContent = `${Math.round(treble * 100)}%`;
-        document.getElementById('trebleBar').style.width = `${treble * 100}%`;
-        
-        // Update frequency display
-        document.getElementById('dominantFreq').textContent = `${Math.round(dominantFreq)} Hz`;
-        document.getElementById('peakFreq').textContent = `${Math.round(peak)}`;
-        document.getElementById('rmsValue').textContent = (volume * 10).toFixed(1);
-        
-        return { volume, dominantFreq, peak, average };
-      }
 
-      getFrequencyRange(lowFreq, highFreq) {
-        const lowIndex = Math.floor((lowFreq / (this.audioContext.sampleRate / 2)) * this.frequencyData.length);
-        const highIndex = Math.floor((highFreq / (this.audioContext.sampleRate / 2)) * this.frequencyData.length);
-        
-        let sum = 0;
-        let count = 0;
-        
-        for (let i = lowIndex; i <= highIndex && i < this.frequencyData.length; i++) {
-          sum += this.frequencyData[i];
-          count++;
+        setMode(mode) {
+          this.mode = mode;
+          $$("#modeGrid .style-option").forEach((x) =>
+            x.classList.toggle("active", x.dataset.mode === mode)
+          );
+          showToast(`Mode: ${mode}`, "info");
         }
-        
-        return count > 0 ? (sum / count) / 255 : 0;
-      }
 
-      visualizeParticles(audioData) {
-        const ctx = this.ctx;
-        const width = this.canvas.clientWidth;
-        const height = this.canvas.clientHeight;
-        const { volume, dominantFreq } = audioData;
-        
-        // Spawn new particles based on audio
-        const spawnCount = Math.floor(volume * this.density * 20);
-        
-        for (let i = 0; i < spawnCount; i++) {
-          const x = Math.random() * width;
-          const y = height + 20;
-          const speed = 2 + volume * 8;
-          const hue = (dominantFreq % 360) + Math.random() * 60;
-          
-          this.particles.push({
-            x, y,
-            vx: (Math.random() - 0.5) * 4,
-            vy: -speed * (0.5 + Math.random() * 0.5),
-            radius: 1 + volume * 6,
-            hue,
-            life: 100,
-            type: 'audio'
+        syncSlider(id, displayId, value) {
+          $(id).value = value;
+          $(displayId).textContent = Number(value).toFixed(1);
+        }
+
+        applyPreset(name) {
+          const presets = {
+            cinematic: {
+              sensitivity: 0.7,
+              density: 0.55,
+              intensity: 1.2,
+              gravity: 0.2,
+              mode: "spectrum",
+            },
+            chill: {
+              sensitivity: 0.6,
+              density: 0.45,
+              intensity: 0.9,
+              gravity: 0.35,
+              mode: "waveform",
+            },
+            chaos: {
+              sensitivity: 1.6,
+              density: 1.25,
+              intensity: 1.5,
+              gravity: -0.2,
+              mode: "vortex",
+            },
+            clean: {
+              sensitivity: 0.85,
+              density: 0.7,
+              intensity: 0.8,
+              gravity: 0.25,
+              mode: "frequency",
+            },
+          };
+          const p = presets[name];
+          if (!p) return;
+
+          this.sensitivity = p.sensitivity;
+          this.density = p.density;
+          this.intensity = p.intensity;
+          this.gravity = p.gravity;
+          this.setMode(p.mode);
+
+          this.syncSlider(
+            "#sensitivitySlider",
+            "#sensitivityValue",
+            p.sensitivity
+          );
+          this.syncSlider("#densitySlider", "#densityValue", p.density);
+          this.syncSlider("#intensitySlider", "#intensityValue", p.intensity);
+          this.syncSlider("#gravitySlider", "#gravityValue", p.gravity);
+
+          showToast(`Preset: ${name}`, "success");
+        }
+
+        resize() {
+          const rect = this.canvas.getBoundingClientRect();
+          this.canvas.width = Math.floor(rect.width * this.dpr);
+          this.canvas.height = Math.floor(rect.height * this.dpr);
+          this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+
+          // init neural nodes
+          if (!this.nodes.length) {
+            for (let i = 0; i < this.maxNodes; i++) {
+              this.nodes.push({
+                x: Math.random() * rect.width,
+                y: Math.random() * rect.height,
+                vx: (Math.random() - 0.5) * 0.6,
+                vy: (Math.random() - 0.5) * 0.6,
+              });
+            }
+          }
+        }
+
+        setStatus(text) {
+          $("#statusText").textContent = text.toUpperCase();
+        }
+
+        updateButtons(activeId = null) {
+          ["micBtn", "synthBtn", "fileBtn"].forEach((id) => {
+            const el = $("#" + id);
+            el.classList.toggle("active", id === activeId);
           });
         }
-        
-        // Update and draw particles
-        const aliveParticles = [];
-        
-        this.particles.forEach(particle => {
-          // Apply physics
-          particle.vy += this.gravity;
-          particle.vx *= 0.99;
-          particle.vy *= 0.99;
-          
-          particle.x += particle.vx;
-          particle.y += particle.vy;
-          particle.life -= 1;
-          
-          // Particle interaction with audio
-          if (particle.type === 'audio') {
-            const freqIndex = Math.floor((particle.x / width) * this.frequencyData.length);
-            const freqValue = this.frequencyData[freqIndex] / 255;
-            particle.vy -= freqValue * 0.5;
+
+        async startMicrophone() {
+          try {
+            await this.ensureAudio();
+            this.stopAudio(false);
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false,
+              },
+            });
+
+            this.mediaStream = stream;
+            this.sourceNode = this.audioContext.createMediaStreamSource(stream);
+            this.sourceNode.connect(this.analyser);
+
+            this.isPlaying = true;
+            this.sourceType = "mic";
+            this.updateButtons("micBtn");
+            this.setStatus("Microphone");
+            showToast("Microphone connected", "success");
+          } catch (err) {
+            console.error(err);
+            showToast("Mic denied — switching to synth", "warning");
+            this.startSynth();
           }
-          
-          // Bounce off walls
-          if (particle.x < 0 || particle.x > width) particle.vx *= -0.8;
-          if (particle.y < 0 || particle.y > height) particle.vy *= -0.8;
-          
-          // Keep particle if still alive and on screen
-          if (particle.life > 0 && particle.y < height + 100) {
-            aliveParticles.push(particle);
-            
-            // Draw particle
-            const alpha = particle.life / 100;
-            const radius = particle.radius * (particle.life / 100);
-            
-            ctx.beginPath();
-            ctx.arc(particle.x, particle.y, radius, 0, Math.PI * 2);
-            
-            const gradient = ctx.createRadialGradient(
-              particle.x, particle.y, 0,
-              particle.x, particle.y, radius * 2
+        }
+
+        async startSynth() {
+          await this.ensureAudio();
+          this.stopAudio(false);
+
+          // base oscillator
+          this.osc = this.audioContext.createOscillator();
+          const gain = this.audioContext.createGain();
+          gain.gain.value = 0.05;
+
+          // modulator for movement
+          this.modOsc = this.audioContext.createOscillator();
+          const modGain = this.audioContext.createGain();
+          this.modOsc.type = "sine";
+          this.modOsc.frequency.value = 2.5;
+          modGain.gain.value = 36;
+
+          this.modOsc.connect(modGain);
+          modGain.connect(this.osc.frequency);
+
+          this.osc.type = "sawtooth";
+          this.osc.frequency.value = 220;
+
+          this.osc.connect(gain);
+          gain.connect(this.analyser);
+
+          this.osc.start();
+          this.modOsc.start();
+
+          // gentle random melody
+          this.synthInterval = setInterval(() => {
+            if (!this.osc) return;
+            const target = 120 + Math.random() * 900;
+            this.osc.frequency.linearRampToValueAtTime(
+              target,
+              this.audioContext.currentTime + 0.25
             );
-            
-            gradient.addColorStop(0, `hsla(${particle.hue}, 100%, 60%, ${alpha * this.intensity})`);
-            gradient.addColorStop(1, `hsla(${particle.hue}, 100%, 30%, 0)`);
-            
-            ctx.fillStyle = gradient;
-            ctx.fill();
+          }, 800);
+
+          this.isPlaying = true;
+          this.sourceType = "synth";
+          this.updateButtons("synthBtn");
+          this.setStatus("Synth");
+          showToast("Synthesizer started", "success");
+        }
+
+        async loadAudioFile(file) {
+          if (!file) return;
+          await this.ensureAudio();
+          this.stopAudio(false);
+
+          try {
+            const arrayBuffer = await file.arrayBuffer();
+            const audioBuffer = await this.audioContext.decodeAudioData(
+              arrayBuffer
+            );
+
+            this.bufferSource = this.audioContext.createBufferSource();
+            this.bufferSource.buffer = audioBuffer;
+
+            this.bufferSource.connect(this.analyser);
+            this.bufferSource.start();
+
+            this.bufferSource.onended = () => {
+              if (this.sourceType === "file") this.stopAudio();
+            };
+
+            this.isPlaying = true;
+            this.sourceType = "file";
+            this.updateButtons("fileBtn");
+            this.setStatus("Audio File");
+            showToast(`Playing: ${file.name}`, "success");
+          } catch (err) {
+            console.error(err);
+            showToast("Failed to load audio file", "error");
           }
-        });
-        
-        this.particles = aliveParticles;
-        document.getElementById('particleCount').textContent = this.particles.length;
-      }
-
-      visualizeFrequency(audioData) {
-        const ctx = this.ctx;
-        const width = this.canvas.clientWidth;
-        const height = this.canvas.clientHeight;
-        const barWidth = width / this.frequencyData.length;
-        
-        ctx.clearRect(0, 0, width, height);
-        
-        for (let i = 0; i < this.frequencyData.length; i += 2) {
-          const value = this.frequencyData[i];
-          const percent = value / 255;
-          const barHeight = percent * height * 0.8;
-          const x = i * barWidth;
-          const y = height - barHeight;
-          
-          const hue = (i / this.frequencyData.length) * 360;
-          
-          const gradient = ctx.createLinearGradient(x, y, x, height);
-          gradient.addColorStop(0, `hsla(${hue}, 100%, 60%, ${this.intensity})`);
-          gradient.addColorStop(1, `hsla(${hue}, 100%, 30%, 0.3)`);
-          
-          ctx.fillStyle = gradient;
-          ctx.fillRect(x, y, barWidth * 1.5, barHeight);
         }
-      }
 
-      visualizeWaveform() {
-        const ctx = this.ctx;
-        const width = this.canvas.clientWidth;
-        const height = this.canvas.clientHeight;
-        const sliceWidth = width / this.timeDomainData.length;
-        
-        ctx.beginPath();
-        ctx.moveTo(0, height / 2);
-        
-        for (let i = 0; i < this.timeDomainData.length; i++) {
-          const value = this.timeDomainData[i];
-          const percent = value / 255;
-          const y = height * percent;
-          const x = i * sliceWidth;
-          
-          ctx.lineTo(x, y);
+        stopAudio(show = true) {
+          this.isPlaying = false;
+
+          // stop buffer
+          if (this.bufferSource) {
+            try {
+              this.bufferSource.stop();
+            } catch {}
+            this.bufferSource.disconnect();
+            this.bufferSource = null;
+          }
+
+          // stop mic
+          if (this.mediaStream) {
+            this.mediaStream.getTracks().forEach((t) => t.stop());
+            this.mediaStream = null;
+          }
+
+          // stop synth
+          if (this.synthInterval) {
+            clearInterval(this.synthInterval);
+            this.synthInterval = null;
+          }
+          if (this.osc) {
+            try {
+              this.osc.stop();
+            } catch {}
+            this.osc.disconnect();
+            this.osc = null;
+          }
+          if (this.modOsc) {
+            try {
+              this.modOsc.stop();
+            } catch {}
+            this.modOsc.disconnect();
+            this.modOsc = null;
+          }
+
+          // disconnect source node
+          if (this.sourceNode) {
+            try {
+              this.sourceNode.disconnect();
+            } catch {}
+            this.sourceNode = null;
+          }
+
+          this.updateButtons(null);
+          this.setStatus("Ready");
+          if (show) showToast("Audio stopped", "info");
         }
-        
-        ctx.strokeStyle = `hsla(200, 100%, 60%, ${this.intensity})`;
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        
-        // Add glow effect
-        ctx.shadowColor = `hsla(200, 100%, 60%, ${this.intensity})`;
-        ctx.shadowBlur = 20;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-      }
 
-      visualizeSpectrum() {
-        const ctx = this.ctx;
-        const width = this.canvas.clientWidth;
-        const height = this.canvas.clientHeight;
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const maxRadius = Math.min(width, height) / 2 - 20;
-        
-        ctx.beginPath();
-        
-        for (let i = 0; i < this.frequencyData.length; i++) {
-          const value = this.frequencyData[i];
-          const percent = value / 255;
-          const radius = percent * maxRadius * this.sensitivity;
-          const angle = (i / this.frequencyData.length) * Math.PI * 2;
-          
-          const x = centerX + Math.cos(angle) * radius;
-          const y = centerY + Math.sin(angle) * radius;
-          
-          if (i === 0) {
-            ctx.moveTo(x, y);
+        // ===== analysis helpers =====
+        getEnergy(rangeStart, rangeEnd) {
+          // range in bins
+          let sum = 0;
+          let count = 0;
+          for (let i = rangeStart; i <= rangeEnd; i++) {
+            sum += this.freq[i] || 0;
+            count++;
+          }
+          return count ? sum / count / 255 : 0;
+        }
+
+        dominantFrequency() {
+          // basic peak
+          let max = -1,
+            idx = 0;
+          for (let i = 2; i < this.freq.length; i++) {
+            if (this.freq[i] > max) {
+              max = this.freq[i];
+              idx = i;
+            }
+          }
+          if (!this.audioContext) return 0;
+          const nyquist = this.audioContext.sampleRate / 2;
+          return (idx / this.freq.length) * nyquist;
+        }
+
+        rms() {
+          let sum = 0;
+          for (let i = 0; i < this.time.length; i++) {
+            const v = (this.time[i] - 128) / 128;
+            sum += v * v;
+          }
+          return Math.sqrt(sum / this.time.length);
+        }
+
+        // ===== visuals =====
+        spawnParticles(targetCount, rectW, rectH) {
+          while (this.particles.length < targetCount) {
+            this.particles.push({
+              x: Math.random() * rectW,
+              y: Math.random() * rectH,
+              vx: (Math.random() - 0.5) * 1.2,
+              vy: (Math.random() - 0.5) * 1.2,
+              r: 1 + Math.random() * 2.2,
+              hue: Math.random() * 360,
+            });
+          }
+          // trim
+          if (this.particles.length > targetCount) {
+            this.particles.length = targetCount;
+          }
+        }
+
+        clearWithTrail() {
+          const { width, height } = this.canvas.getBoundingClientRect();
+          this.ctx.fillStyle = `rgba(5,5,16,${this.trailAlpha})`;
+          this.ctx.fillRect(0, 0, width, height);
+        }
+
+        drawGlowCircle(x, y, r, hue, alpha) {
+          const g = this.ctx.createRadialGradient(x, y, 0, x, y, r * 6);
+          g.addColorStop(0, `hsla(${hue}, 95%, 65%, ${alpha})`);
+          g.addColorStop(1, `hsla(${hue}, 95%, 65%, 0)`);
+          this.ctx.fillStyle = g;
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, r * 6, 0, Math.PI * 2);
+          this.ctx.fill();
+
+          this.ctx.fillStyle = `hsla(${hue}, 95%, 70%, ${alpha})`;
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, r, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+
+        drawFrequencyBars(width, height, energy) {
+          const bars = 80;
+          const step = Math.floor(this.freq.length / bars);
+          const barW = width / bars;
+
+          for (let i = 0; i < bars; i++) {
+            const v = this.freq[i * step] / 255;
+            const h = v * height * 0.72 * this.sensitivity;
+            const x = i * barW;
+            const hue = 260 + i * 0.9 + energy * 60;
+            this.ctx.fillStyle = `hsla(${hue}, 95%, ${55 + v * 20}%, ${
+              0.65 + this.intensity * 0.2
+            })`;
+            this.ctx.fillRect(x + 1, height - h, barW - 2, h);
+          }
+        }
+
+        drawWaveform(width, height) {
+          this.ctx.lineWidth = 2;
+          this.ctx.beginPath();
+          const mid = height / 2;
+          for (let i = 0; i < this.time.length; i++) {
+            const x = (i / (this.time.length - 1)) * width;
+            const y =
+              mid +
+              ((this.time[i] - 128) / 128) * mid * 0.75 * this.sensitivity;
+            if (i === 0) this.ctx.moveTo(x, y);
+            else this.ctx.lineTo(x, y);
+          }
+          this.ctx.strokeStyle = `hsla(${
+            290 + this.intensity * 40
+          }, 95%, 70%, 0.9)`;
+          this.ctx.shadowColor = "rgba(139,92,246,0.6)";
+          this.ctx.shadowBlur = 12;
+          this.ctx.stroke();
+          this.ctx.shadowBlur = 0;
+        }
+
+        drawSpectrumLines(width, height, energy) {
+          const lines = 28;
+          const binsPerLine = Math.floor(this.freq.length / lines);
+
+          for (let l = 0; l < lines; l++) {
+            const baseY = height - (l / lines) * height * 0.8;
+            this.ctx.beginPath();
+            for (let i = 0; i < binsPerLine; i++) {
+              const idx = l * binsPerLine + i;
+              const x = (i / (binsPerLine - 1)) * width;
+              const v = (this.freq[idx] / 255) * this.sensitivity;
+              const y = baseY - v * 28 * (1 + energy);
+              if (i === 0) this.ctx.moveTo(x, y);
+              else this.ctx.lineTo(x, y);
+            }
+            const hue = 255 + l * 3 + energy * 50;
+            this.ctx.strokeStyle = `hsla(${hue}, 95%, 65%, ${
+              0.08 + (l / lines) * 0.28
+            })`;
+            this.ctx.lineWidth = 1.2;
+            this.ctx.stroke();
+          }
+        }
+
+        drawVortex(width, height, energy) {
+          const cx = width / 2;
+          const cy = height / 2;
+          const rings = 170;
+          const spin = 0.02 + energy * 0.08;
+
+          for (let i = 0; i < rings; i++) {
+            const t = i / rings;
+            const angle = t * Math.PI * 10 + performance.now() * spin * 0.02;
+            const radius = t * Math.min(width, height) * 0.45;
+            const v = this.freq[Math.floor(t * (this.freq.length - 1))] / 255;
+            const x = cx + Math.cos(angle) * radius * (1 + v * 0.25);
+            const y = cy + Math.sin(angle) * radius * (1 + v * 0.25);
+            const hue = 280 + t * 120 + v * 80;
+            const alpha = 0.08 + v * 0.25 * this.intensity;
+            this.drawGlowCircle(x, y, 1.2 + v * 3.2, hue, alpha);
+          }
+        }
+
+        drawNeural(width, height, energy) {
+          // move nodes
+          for (const n of this.nodes) {
+            n.x += n.vx * (1 + energy * 1.8);
+            n.y += n.vy * (1 + energy * 1.8);
+
+            if (n.x < 0 || n.x > width) n.vx *= -1;
+            if (n.y < 0 || n.y > height) n.vy *= -1;
+            n.x = clamp(n.x, 0, width);
+            n.y = clamp(n.y, 0, height);
+          }
+
+          // connect
+          const maxDist = 140 + energy * 120;
+          this.ctx.lineWidth = 1;
+
+          for (let i = 0; i < this.nodes.length; i++) {
+            for (let j = i + 1; j < this.nodes.length; j++) {
+              const a = this.nodes[i];
+              const b = this.nodes[j];
+              const dx = a.x - b.x;
+              const dy = a.y - b.y;
+              const d = Math.sqrt(dx * dx + dy * dy);
+              if (d < maxDist) {
+                const alpha =
+                  (1 - d / maxDist) * (0.12 + energy * 0.25) * this.intensity;
+                const hue = 260 + (i / this.nodes.length) * 80 + energy * 60;
+                this.ctx.strokeStyle = `hsla(${hue}, 95%, 70%, ${alpha})`;
+                this.ctx.beginPath();
+                this.ctx.moveTo(a.x, a.y);
+                this.ctx.lineTo(b.x, b.y);
+                this.ctx.stroke();
+              }
+            }
+          }
+
+          // draw nodes
+          for (let i = 0; i < this.nodes.length; i++) {
+            const n = this.nodes[i];
+            const v =
+              this.freq[
+                Math.floor((i / this.nodes.length) * (this.freq.length - 1))
+              ] / 255;
+            const hue = 280 + v * 120;
+            this.drawGlowCircle(n.x, n.y, 1.6 + v * 3.0, hue, 0.12 + v * 0.35);
+          }
+        }
+
+        render() {
+          const rect = this.canvas.getBoundingClientRect();
+          const width = rect.width;
+          const height = rect.height;
+
+          // grab audio data (or fake idle data)
+          if (this.analyser && this.isPlaying) {
+            this.analyser.getByteFrequencyData(this.freq);
+            this.analyser.getByteTimeDomainData(this.time);
           } else {
-            ctx.lineTo(x, y);
+            // idle ambient
+            const t = performance.now() * 0.001;
+            for (let i = 0; i < this.freq.length; i++) {
+              this.freq[i] =
+                8 + Math.floor(12 * Math.abs(Math.sin(t + i * 0.03)));
+            }
+            for (let i = 0; i < this.time.length; i++) {
+              this.time[i] = 128 + Math.floor(8 * Math.sin(t * 2 + i * 0.06));
+            }
+          }
+
+          const bass = this.getEnergy(2, 18);
+          const mid = this.getEnergy(19, 90);
+          const treb = this.getEnergy(91, 240);
+          const vol = clamp(
+            (bass * 0.35 + mid * 0.45 + treb * 0.2) * this.sensitivity,
+            0,
+            1
+          );
+          const energy = clamp(vol * this.intensity, 0, 2);
+
+          // update meters
+          const toPct = (x) => Math.round(clamp(x, 0, 1) * 100) + "%";
+          $("#volumeValue").textContent = toPct(vol);
+          $("#bassValue").textContent = toPct(bass);
+          $("#midValue").textContent = toPct(mid);
+          $("#trebleValue").textContent = toPct(treb);
+
+          $("#volumeBar").style.width = toPct(vol);
+          $("#bassBar").style.width = toPct(bass);
+          $("#midBar").style.width = toPct(mid);
+          $("#trebleBar").style.width = toPct(treb);
+
+          // frequency stats
+          const dom = this.dominantFrequency();
+          const rms = this.rms();
+          $("#dominantFreq").textContent = `${Math.round(dom)} Hz`;
+          $("#peakFreq").textContent = `${Math.round(
+            dom * (0.88 + energy * 0.08)
+          )} Hz`;
+          $("#rmsValue").textContent = rms.toFixed(2);
+
+          // clear
+          this.clearWithTrail();
+
+          // draw mode
+          if (this.mode === "particles") {
+            const target = Math.floor(
+              clamp(this.density, 0.1, 1.5) * (260 + energy * 360)
+            );
+            const count = Math.min(this.maxParticles, target);
+            this.spawnParticles(count, width, height);
+
+            const pull = this.gravity * 0.6;
+            const cx = width / 2;
+            const cy = height / 2;
+
+            for (const p of this.particles) {
+              const dx = cx - p.x;
+              const dy = cy - p.y;
+              p.vx += dx * 0.00002 * pull * (1 + energy);
+              p.vy += dy * 0.00002 * pull * (1 + energy);
+
+              // audio push
+              p.vx += (Math.random() - 0.5) * energy * 0.25;
+              p.vy += (Math.random() - 0.5) * energy * 0.25;
+
+              p.x += p.vx;
+              p.y += p.vy;
+
+              // wrap
+              if (p.x < -20) p.x = width + 20;
+              if (p.x > width + 20) p.x = -20;
+              if (p.y < -20) p.y = height + 20;
+              if (p.y > height + 20) p.y = -20;
+
+              // color shift
+              p.hue = (p.hue + energy * 2.2 + 0.3) % 360;
+
+              this.drawGlowCircle(
+                p.x,
+                p.y,
+                p.r + energy * 1.4,
+                270 + p.hue * 0.25,
+                0.06 + energy * 0.08
+              );
+            }
+
+            $("#particleCount").textContent = String(this.particles.length);
+          } else {
+            $("#particleCount").textContent = "0";
+          }
+
+          if (this.mode === "frequency") {
+            this.drawFrequencyBars(width, height, energy);
+          }
+          if (this.mode === "waveform") {
+            this.drawWaveform(width, height);
+          }
+          if (this.mode === "spectrum") {
+            this.drawSpectrumLines(width, height, energy);
+          }
+          if (this.mode === "vortex") {
+            this.drawVortex(width, height, energy);
+          }
+          if (this.mode === "neural") {
+            this.drawNeural(width, height, energy);
           }
         }
-        
-        ctx.closePath();
-        
-        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius);
-        gradient.addColorStop(0, `hsla(300, 100%, 60%, ${this.intensity * 0.5})`);
-        gradient.addColorStop(1, `hsla(200, 100%, 30%, ${this.intensity * 0.2})`);
-        
-        ctx.fillStyle = gradient;
-        ctx.fill();
-      }
 
-      visualizeVortex(audioData) {
-        const ctx = this.ctx;
-        const width = this.canvas.clientWidth;
-        const height = this.canvas.clientHeight;
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const time = performance.now() * 0.001;
-        
-        const { volume } = audioData;
-        const rotation = time * 0.5 + volume * 2;
-        
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(rotation);
-        
-        for (let i = 0; i < 50; i++) {
-          const angle = (i / 50) * Math.PI * 2;
-          const radius = 20 + i * 8;
-          const freqIndex = Math.floor((i / 50) * this.frequencyData.length);
-          const value = this.frequencyData[freqIndex] / 255;
-          const particleRadius = 2 + value * 10;
-          
-          const x = Math.cos(angle) * radius;
-          const y = Math.sin(angle) * radius;
-          
-          const hue = (i * 7 + time * 50) % 360;
-          
-          ctx.beginPath();
-          ctx.arc(x, y, particleRadius, 0, Math.PI * 2);
-          
-          const gradient = ctx.createRadialGradient(x, y, 0, x, y, particleRadius * 2);
-          gradient.addColorStop(0, `hsla(${hue}, 100%, 60%, ${this.intensity})`);
-          gradient.addColorStop(1, `hsla(${hue}, 100%, 30%, 0)`);
-          
-          ctx.fillStyle = gradient;
-          ctx.fill();
+        loop() {
+          // fps
+          const now = performance.now();
+          const dt = now - this.lastT;
+          this.lastT = now;
+
+          const inst = dt > 0 ? 1000 / dt : 60;
+          this.fps =
+            this.fps * this.fpsSmoothing + inst * (1 - this.fpsSmoothing);
+          $("#fpsValue").textContent = String(Math.round(this.fps));
+
+          this.render();
+          requestAnimationFrame(() => this.loop());
         }
-        
-        ctx.restore();
       }
 
-      visualizeNeural() {
-        const ctx = this.ctx;
-        const width = this.canvas.clientWidth;
-        const height = this.canvas.clientHeight;
-        const nodeCount = 15;
-        const time = performance.now() * 0.001;
-        
-        // Draw neural network nodes
-        const nodes = [];
-        
-        for (let i = 0; i < nodeCount; i++) {
-          const x = (i + 1) * (width / (nodeCount + 1));
-          const layer = Math.floor(i / 5);
-          const y = (layer + 1) * (height / 4);
-          
-          const freqIndex = Math.floor((i / nodeCount) * this.frequencyData.length);
-          const value = this.frequencyData[freqIndex] / 255;
-          const radius = 5 + value * 15;
-          
-          const hue = (i * 25 + time * 100) % 360;
-          
-          nodes.push({ x, y, radius, hue, value });
-          
-          // Draw connections
-          if (i > 0) {
-            const prevNode = nodes[i - 1];
-            const opacity = (value + prevNode.value) / 2 * this.intensity;
-            
-            ctx.beginPath();
-            ctx.moveTo(prevNode.x, prevNode.y);
-            ctx.lineTo(x, y);
-            ctx.strokeStyle = `hsla(${hue}, 100%, 60%, ${opacity})`;
-            ctx.lineWidth = 2;
-            ctx.stroke();
+      // =========================
+      // Boot
+      // =========================
+      document.addEventListener("DOMContentLoaded", () => {
+        const loader = $("#pageLoader");
+        const loaderText = $("#loaderText");
+
+        // create visualizer
+        const visualizer = new QuantumAudioVisualizer();
+        window.quantumVisualizer = visualizer;
+
+        // create Cynthia
+        const cynthia = new CynthiaVoiceAssistant((transcript) => {
+          // command parsing (simple + effective)
+          const t = transcript;
+
+          const say = (msg) => {
+            cynthia.speak(msg);
+            showToast(msg, "info");
+          };
+
+          // source commands
+          if (/microphone|mic\b/.test(t)) {
+            visualizer.startMicrophone();
+            say("Switching to microphone.");
+            return;
           }
-        }
-        
-        // Draw nodes
-        nodes.forEach(node => {
-          ctx.beginPath();
-          ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-          
-          const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, node.radius * 2);
-          gradient.addColorStop(0, `hsla(${node.hue}, 100%, 60%, ${node.value * this.intensity})`);
-          gradient.addColorStop(1, `hsla(${node.hue}, 100%, 30%, 0)`);
-          
-          ctx.fillStyle = gradient;
-          ctx.fill();
+          if (/synth|synthesizer|music/.test(t)) {
+            visualizer.startSynth();
+            say("Starting synthesizer.");
+            return;
+          }
+          if (/stop|silence|pause/.test(t)) {
+            visualizer.stopAudio();
+            say("Stopping audio.");
+            return;
+          }
+
+          // modes
+          const modeMatch = t.match(
+            /mode\s+(particles|frequency|waveform|spectrum|vortex|neural)/
+          );
+          if (modeMatch) {
+            visualizer.setMode(modeMatch[1]);
+            say(`Mode set to ${modeMatch[1]}.`);
+            return;
+          }
+
+          // preset
+          const presetMatch = t.match(/preset\s+(cinematic|chill|chaos|clean)/);
+          if (presetMatch) {
+            visualizer.applyPreset(presetMatch[1]);
+            say(`Preset ${presetMatch[1]} applied.`);
+            return;
+          }
+
+          if (/cinematic|fullscreen/.test(t)) {
+            visualizer.toggleCinematic();
+            say("Toggling cinematic mode.");
+            return;
+          }
+
+          // param tweaks
+          if (/increase\s+sensitivity/.test(t)) {
+            visualizer.sensitivity = clamp(
+              visualizer.sensitivity + 0.1,
+              0.1,
+              2
+            );
+            visualizer.syncSlider(
+              "#sensitivitySlider",
+              "#sensitivityValue",
+              visualizer.sensitivity
+            );
+            say("Sensitivity increased.");
+            return;
+          }
+          if (/decrease\s+sensitivity/.test(t)) {
+            visualizer.sensitivity = clamp(
+              visualizer.sensitivity - 0.1,
+              0.1,
+              2
+            );
+            visualizer.syncSlider(
+              "#sensitivitySlider",
+              "#sensitivityValue",
+              visualizer.sensitivity
+            );
+            say("Sensitivity decreased.");
+            return;
+          }
+
+          say(
+            "Try: start synth, microphone, mode vortex, preset chaos, cinematic."
+          );
         });
-      }
+        window.cynthia = cynthia;
 
-      animate() {
-        this.animationId = requestAnimationFrame(() => this.animate());
-        
-        const now = performance.now();
-        const deltaTime = now - this.lastFrameTime;
-        this.lastFrameTime = now;
-        
-        // Clear canvas with gradient background
-        const width = this.canvas.clientWidth;
-        const height = this.canvas.clientHeight;
-        
-        const gradient = this.ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, '#0a0a1a');
-        gradient.addColorStop(1, '#121230');
-        
-        this.ctx.fillStyle = gradient;
-        this.ctx.fillRect(0, 0, width, height);
-        
-        // Get audio data
-        const audioData = this.getAudioData();
-        
-        // Choose visualization based on mode
-        switch (this.visualizationMode) {
-          case 'particles':
-            this.visualizeParticles(audioData);
-            break;
-          case 'frequency':
-            this.visualizeFrequency(audioData);
-            break;
-          case 'waveform':
-            this.visualizeWaveform();
-            break;
-          case 'spectrum':
-            this.visualizeSpectrum();
-            break;
-          case 'vortex':
-            this.visualizeVortex(audioData);
-            break;
-          case 'neural':
-            this.visualizeNeural();
-            break;
-        }
-      }
+        // voice button
+        $("#voiceBtn").addEventListener("click", () =>
+          cynthia.toggleListening()
+        );
 
-      toggleVoiceControl() {
-        const voiceBtn = document.getElementById('voiceBtn');
-        const voiceStatus = document.getElementById('voiceStatus');
-        
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-          this.showToast('Voice recognition not supported', 'warning');
-          return;
-        }
-        
-        if (voiceBtn.classList.contains('listening')) {
-          // Stop listening
-          voiceBtn.classList.remove('listening');
-          voiceStatus.textContent = 'Voice control disabled';
-          voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-        } else {
-          // Start listening
-          voiceBtn.classList.add('listening');
-          voiceStatus.textContent = 'Listening... Speak commands';
-          voiceBtn.innerHTML = '<i class="fas fa-microphone-alt"></i>';
-          this.startVoiceRecognition();
-        }
-      }
+        // smooth loader exit
+        setTimeout(() => {
+          loaderText.textContent = "Quantum systems online…";
+        }, 650);
 
-      startVoiceRecognition() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        
-        recognition.continuous = true;
-        recognition.interimResults = false;
-        recognition.lang = 'en-US';
-        
-        recognition.onresult = (event) => {
-          const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
-          
-          // Process voice commands
-          if (transcript.includes('start') || transcript.includes('begin')) {
-            this.startSynthesizer();
-          } else if (transcript.includes('stop') || transcript.includes('end')) {
-            this.stopAudio();
-          } else if (transcript.includes('microphone') || transcript.includes('mic')) {
-            this.startMicrophone();
-          } else if (transcript.includes('synthesizer') || transcript.includes('synth')) {
-            this.startSynthesizer();
-          } else if (transcript.includes('mode')) {
-            // Cycle through visualization modes
-            const modes = ['particles', 'frequency', 'waveform', 'spectrum', 'vortex', 'neural'];
-            const currentIndex = modes.indexOf(this.visualizationMode);
-            const nextMode = modes[(currentIndex + 1) % modes.length];
-            
-            this.visualizationMode = nextMode;
-            document.querySelectorAll('.style-option').forEach(opt => opt.classList.remove('active'));
-            document.querySelector(`.style-option[data-mode="${nextMode}"]`).classList.add('active');
-            
-            this.showToast(`Changed to ${nextMode} mode`, 'success');
-          } else if (transcript.includes('increase sensitivity') || transcript.includes('louder')) {
-            const newValue = Math.min(2, this.sensitivity + 0.2);
-            this.sensitivity = newValue;
-            document.getElementById('sensitivitySlider').value = newValue;
-            document.getElementById('sensitivityValue').textContent = newValue.toFixed(1);
-          } else if (transcript.includes('decrease sensitivity') || transcript.includes('softer')) {
-            const newValue = Math.max(0.1, this.sensitivity - 0.2);
-            this.sensitivity = newValue;
-            document.getElementById('sensitivitySlider').value = newValue;
-            document.getElementById('sensitivityValue').textContent = newValue.toFixed(1);
-          }
-          
-          this.showToast(`Voice command: ${transcript}`, 'info');
-        };
-        
-        recognition.onerror = (event) => {
-          console.error('Speech recognition error:', event.error);
-          this.showToast('Voice recognition error', 'error');
-          
-          const voiceBtn = document.getElementById('voiceBtn');
-          voiceBtn.classList.remove('listening');
-          voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-          
-          document.getElementById('voiceStatus').textContent = 'Voice control error';
-        };
-        
-        recognition.start();
-      }
-    }
-
-    // Initialize the visualizer when page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      const visualizer = new QuantumAudioVisualizer();
-      window.quantumVisualizer = visualizer; // Make available globally
-    });
-  </script>
-</body>
+        setTimeout(() => {
+          document.body.classList.remove("is-loading");
+          loader.style.opacity = "0";
+          setTimeout(() => {
+            loader.style.display = "none";
+            showToast("Ready! Press S to start synth.", "success");
+            $("#voiceStatus").textContent = cynthia.recognition
+              ? "Click to enable voice control"
+              : "Voice not supported in this browser";
+            cynthia.speak(
+              "Welcome to the Quantum Sound Explorer. Press S to start the synthesizer, or click microphone."
+            );
+          }, 450);
+        }, 1500);
+      });
+    </script>
+  </body>
 </html>
