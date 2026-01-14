@@ -1327,6 +1327,34 @@ document.addEventListener("DOMContentLoaded", () => {
       return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
     },
   };
+  // ✅ Only smooth-scroll for in-page anchors, allow normal navigation for .html pages
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest("a");
+    if (!link) return;
+
+    const href = link.getAttribute("href");
+    if (!href) return;
+
+    // Allow external links + normal pages
+    const isHash = href.startsWith("#");
+    if (!isHash) return;
+
+    // Only block default for hash links
+    e.preventDefault();
+
+    const target = document.querySelector(href);
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    // Optional: close mobile menu after click
+    const mobileMenu = document.getElementById("mobile-menu");
+    const overlay = document.querySelector(".menu-overlay");
+    const hamburger = document.querySelector(".hamburger");
+    if (mobileMenu && overlay && hamburger) {
+      mobileMenu.classList.remove("open");
+      overlay.classList.remove("active");
+      hamburger.setAttribute("aria-expanded", "false");
+    }
+  });
 
   // =========================
   // DEMO 1: PARTICLE GALAXY
